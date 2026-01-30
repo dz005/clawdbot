@@ -152,7 +152,7 @@ export const dingtalkPlugin: ChannelPlugin<DingTalkAccountConfig> = {
           const isPrivateChat = message.conversationType === "1";
           const isGroupChat = message.conversationType === "2";
           const chatType = isPrivateChat ? "direct" : "group";
-          const chatId = isPrivateChat ? message.senderStaffId : message.conversationId;
+          const chatId = message.conversationId;
 
           ctx.log?.info(`[${ctx.accountId}] ${chatType} message from ${message.senderStaffId}: ${message.text?.content?.slice(0, 50)}...`);
 
