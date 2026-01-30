@@ -79,27 +79,40 @@ export async function monitorDingTalkProvider(opts: MonitorDingTalkOptions = {})
     // Log message details
     logger.info(`Message type: ${message.msgtype}, conversationType: ${message.conversationType}`);
 
-    // Only handle text messages in single chat (conversationType: "1")
-    if (message.msgtype === "text" && message.conversationType === "1") {
-      logger.info(`Processing text message from ${message.senderStaffId}`);
-      if (opts.onMessage) {
-        logger.info(`Calling onMessage handler...`);
-        // Call handler asynchronously but don't wait
-        Promise.resolve(opts.onMessage(message))
-          .then(() => {
-            logger.info(`onMessage handler completed successfully`);
-          })
-          .catch((err) => {
-            logger.error(danger(`Error handling DingTalk message: ${err}`));
-            logger.error(danger(`Error stack: ${err.stack}`));
-          });
+    // Handle text messages in single chat (conversationType: "1") or group chat (conversationType: "2")
+    if (message.msgtype === "text") {
+      const isPrivateChat = message.conversationType === "1";
+      const isGroupChat = message.conversationType === "2";
+
+      // For group chat, only respond if bot is mentioned
+      if (isGroupChat && !message.isInAtList) {
+        logger.info(`Skipping group message: bot not mentioned`);
+        return;
+      }
+
+      if (isPrivateChat || isGroupChat) {
+        logger.info(
+          `Processing ${isPrivateChat ? "private" : "group"} message from ${message.senderStaffId}`,
+        );
+        if (opts.onMessage) {
+          logger.info(`Calling onMessage handler...`);
+          // Call handler asynchronously but don't wait
+          Promise.resolve(opts.onMessage(message))
+            .then(() => {
+              logger.info(`onMessage handler completed successfully`);
+            })
+            .catch((err) => {
+              logger.error(danger(`Error handling DingTalk message: ${err}`));
+              logger.error(danger(`Error stack: ${err.stack}`));
+            });
+        } else {
+          logger.warn("No onMessage handler configured");
+        }
       } else {
-        logger.warn("No onMessage handler configured");
+        logger.info(`Skipping message: unsupported conversationType=${message.conversationType}`);
       }
     } else {
-      logger.info(
-        `Skipping message: msgtype=${message.msgtype}, conversationType=${message.conversationType}`,
-      );
+      logger.info(`Skipping message: unsupported msgtype=${message.msgtype}`);
     }
   });
 

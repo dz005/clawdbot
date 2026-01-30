@@ -149,7 +149,12 @@ export const dingtalkPlugin: ChannelPlugin<DingTalkAccountConfig> = {
         accountId: ctx.accountId,
         abortSignal: ctx.abortSignal,
         onMessage: async (message) => {
-          ctx.log?.info(`[${ctx.accountId}] DM from ${message.senderStaffId}: ${message.text?.content?.slice(0, 50)}...`);
+          const isPrivateChat = message.conversationType === "1";
+          const isGroupChat = message.conversationType === "2";
+          const chatType = isPrivateChat ? "direct" : "group";
+          const chatId = isPrivateChat ? message.senderStaffId : message.conversationId;
+
+          ctx.log?.info(`[${ctx.accountId}] ${chatType} message from ${message.senderStaffId}: ${message.text?.content?.slice(0, 50)}...`);
 
           try {
             ctx.log?.info(`[${ctx.accountId}] Building inbound context...`);
@@ -158,11 +163,11 @@ export const dingtalkPlugin: ChannelPlugin<DingTalkAccountConfig> = {
               Body: message.text?.content ?? "",
               From: message.senderStaffId,
               FromName: message.senderNick || message.senderStaffId,
-              SessionKey: `dingtalk:${message.senderStaffId}`,
+              SessionKey: `dingtalk:${chatId}`,
               AccountId: ctx.accountId,
               MessageSid: message.msgId,
-              ChatType: "direct",
-              ChatId: message.senderStaffId,
+              ChatType: chatType,
+              ChatId: chatId,
             });
             ctx.log?.info(`[${ctx.accountId}] Inbound context built, dispatching reply...`);
 
@@ -178,14 +183,33 @@ export const dingtalkPlugin: ChannelPlugin<DingTalkAccountConfig> = {
                   if (text) {
                     ctx.log?.info(`[${ctx.accountId}] Sending reply: ${text.slice(0, 100)}...`);
 
-                    // Use Markdown format for better rendering
-                    await runtime.channel.dingtalk.sendMarkdownDingTalk({
-                      config: ctx.cfg,
-                      accountId: ctx.accountId,
-                      userId: message.senderStaffId,
-                      title: "回复",
-                      text,
-                    });
+                    if (isGroupChat && message.sessionWebhook) {
+                      // For group chat, use sessionWebhook
+                      ctx.log?.info(`[${ctx.accountId}] Using sessionWebhook for group reply`);
+                      const response = await fetch(message.sessionWebhook, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          msgtype: "markdown",
+                          markdown: {
+                            title: "回复",
+                            text,
+                          },
+                        }),
+                      });
+                      if (!response.ok) {
+                        throw new Error(`Failed to send group message: ${response.status} ${await response.text()}`);
+                      }
+                    } else {
+                      // For private chat, use Markdown format
+                      await runtime.channel.dingtalk.sendMarkdownDingTalk({
+                        config: ctx.cfg,
+                        accountId: ctx.accountId,
+                        userId: message.senderStaffId,
+                        title: "回复",
+                        text,
+                      });
+                    }
 
                     ctx.log?.info(`[${ctx.accountId}] Reply sent successfully`);
                   } else {
