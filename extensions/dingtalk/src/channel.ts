@@ -176,8 +176,15 @@ export const dingtalkPlugin: ChannelPlugin<DingTalkAccountConfig> = {
               ctx: inboundCtx,
               cfg: ctx.cfg,
               dispatcherOptions: {
-                deliver: async (payload) => {
-                  ctx.log?.info(`[${ctx.accountId}] Deliver called with payload: ${JSON.stringify(payload).slice(0, 200)}`);
+                deliver: async (payload, info) => {
+                  ctx.log?.info(`[${ctx.accountId}] Deliver called with payload: ${JSON.stringify(payload).slice(0, 200)}, kind: ${info?.kind}`);
+
+                  // Only send final messages to avoid duplicate replies
+                  if (info?.kind !== "final") {
+                    ctx.log?.info(`[${ctx.accountId}] Skipping non-final message (kind: ${info?.kind})`);
+                    return;
+                  }
+
                   // Send reply using DingTalk API
                   const text = payload.text ?? "";
                   if (text) {

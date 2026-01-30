@@ -51,6 +51,16 @@ export async function monitorDingTalkProvider(opts: MonitorDingTalkOptions = {})
     // Always log that we received an event
     logger.info(`Received DingTalk event: type=${event.type}`);
 
+    // Acknowledge message immediately to prevent server retry
+    try {
+      client.socketCallBackResponse(event.headers.messageId, {
+        status: "SUCCESS",
+        message: "OK",
+      });
+    } catch (err) {
+      logger.error(danger(`Failed to acknowledge message: ${err}`));
+    }
+
     // Parse the data field which is a JSON string
     let parsedEvent: DingTalkCallbackEvent;
     try {
