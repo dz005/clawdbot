@@ -96,6 +96,7 @@ export type {
 } from "../config/types.js";
 export {
   DiscordConfigSchema,
+  DingTalkConfigSchema,
   GoogleChatConfigSchema,
   IMessageConfigSchema,
   MSTeamsConfigSchema,

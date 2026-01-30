@@ -12,6 +12,7 @@ export const CHAT_CHANNEL_ORDER = [
   "slack",
   "signal",
   "imessage",
+  "dingtalk",
 ] as const;
 
 export type ChatChannelId = (typeof CHAT_CHANNEL_ORDER)[number];
@@ -97,6 +98,16 @@ const CHAT_CHANNEL_META: Record<ChatChannelId, ChannelMeta> = {
     docsLabel: "imessage",
     blurb: "this is still a work in progress.",
     systemImage: "message.fill",
+  },
+  dingtalk: {
+    id: "dingtalk",
+    label: "DingTalk",
+    selectionLabel: "DingTalk (Stream Mode)",
+    detailLabel: "DingTalk Bot",
+    docsPath: "/channels/dingtalk",
+    docsLabel: "dingtalk",
+    blurb: "enterprise chat with Stream mode (no public IP needed).",
+    systemImage: "bubble.left.and.bubble.right.fill",
   },
 };
 

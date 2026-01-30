@@ -1,0 +1,9 @@
+{
+  "channels": {
+    "dingtalk": {
+      "clientId": "your-dingtalk-client-id",
+      "clientSecret": "your-dingtalk-client-secret",
+      "robotCode": "your-dingtalk-robot-code"
+    }
+  }
+}

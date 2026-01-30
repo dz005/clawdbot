@@ -769,3 +769,23 @@ export const MSTeamsConfigSchema = z
         'channels.msteams.dmPolicy="open" requires channels.msteams.allowFrom to include "*"',
     });
   });
+
+export const DingTalkAccountSchema = z
+  .object({
+    enabled: z.boolean().optional(),
+    clientId: z.string().optional(),
+    clientSecret: z.string().optional(),
+    robotCode: z.string().optional(),
+  })
+  .strict();
+
+export const DingTalkConfigSchema = z
+  .object({
+    defaultAccount: z.string().optional(),
+    accounts: z.record(z.string(), DingTalkAccountSchema.optional()).optional(),
+    // Legacy top-level config (for backward compatibility)
+    clientId: z.string().optional(),
+    clientSecret: z.string().optional(),
+    robotCode: z.string().optional(),
+  })
+  .strict();

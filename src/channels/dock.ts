@@ -369,6 +369,23 @@ const DOCKS: Record<ChatChannelId, ChannelDock> = {
       },
     },
   },
+  dingtalk: {
+    id: "dingtalk",
+    capabilities: {
+      chatTypes: ["direct"],
+      polls: false,
+      reactions: false,
+      threads: false,
+      media: false,
+      nativeCommands: false,
+    },
+    outbound: { textChunkLimit: 4000 },
+    config: {
+      resolveAllowFrom: () => [],
+      formatAllowFrom: ({ allowFrom }) =>
+        allowFrom.map((entry) => String(entry).trim()).filter(Boolean),
+    },
+  },
 };
 
 function buildDockFromPlugin(plugin: ChannelPlugin): ChannelDock {

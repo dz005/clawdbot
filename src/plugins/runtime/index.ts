@@ -110,6 +110,8 @@ import { monitorTelegramProvider } from "../../telegram/monitor.js";
 import { probeTelegram } from "../../telegram/probe.js";
 import { sendMessageTelegram } from "../../telegram/send.js";
 import { resolveTelegramToken } from "../../telegram/token.js";
+import { monitorDingTalkProvider } from "../../dingtalk/monitor.js";
+import { sendMarkdownDingTalk, sendMessageDingTalk } from "../../dingtalk/send.js";
 import { loadWebMedia } from "../../web/media.js";
 import { getActiveWebListener } from "../../web/active-listener.js";
 import {
@@ -290,6 +292,11 @@ export function createPluginRuntime(): PluginRuntime {
         sendMessageTelegram,
         monitorTelegramProvider,
         messageActions: telegramMessageActions,
+      },
+      dingtalk: {
+        monitorDingTalkProvider,
+        sendMessageDingTalk,
+        sendMarkdownDingTalk,
       },
       signal: {
         probeSignal,
