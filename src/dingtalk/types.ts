@@ -36,7 +36,112 @@ export type DingTalkTextMessage = {
   msgtype: "text";
 };
 
-export type DingTalkMessage = DingTalkTextMessage;
+export type DingTalkPictureMessage = {
+  conversationId: string;
+  atUsers: Array<{ dingtalkId: string; staffId?: string }>;
+  chatbotCorpId: string;
+  chatbotUserId: string;
+  msgId: string;
+  senderNick: string;
+  isAdmin: boolean;
+  senderStaffId: string;
+  sessionWebhookExpiredTime: number;
+  createAt: number;
+  senderCorpId: string;
+  conversationType: string;
+  senderId: string;
+  conversationTitle: string;
+  isInAtList: boolean;
+  sessionWebhook: string;
+  content: {
+    pictureDownloadCode: string;
+    downloadCode: string;
+  };
+  msgtype: "picture";
+};
+
+export type DingTalkFileMessage = {
+  conversationId: string;
+  atUsers: Array<{ dingtalkId: string; staffId?: string }>;
+  chatbotCorpId: string;
+  chatbotUserId: string;
+  msgId: string;
+  senderNick: string;
+  isAdmin: boolean;
+  senderStaffId: string;
+  sessionWebhookExpiredTime: number;
+  createAt: number;
+  senderCorpId: string;
+  conversationType: string;
+  senderId: string;
+  conversationTitle: string;
+  isInAtList: boolean;
+  sessionWebhook: string;
+  content: {
+    spaceId: string;
+    fileName: string;
+    downloadCode: string;
+    fileId: string;
+  };
+  msgtype: "file";
+};
+
+export type DingTalkAudioMessage = {
+  conversationId: string;
+  atUsers: Array<{ dingtalkId: string; staffId?: string }>;
+  chatbotCorpId: string;
+  chatbotUserId: string;
+  msgId: string;
+  senderNick: string;
+  isAdmin: boolean;
+  senderStaffId: string;
+  sessionWebhookExpiredTime: number;
+  createAt: number;
+  senderCorpId: string;
+  conversationType: string;
+  senderId: string;
+  conversationTitle: string;
+  isInAtList: boolean;
+  sessionWebhook: string;
+  content: {
+    downloadCode: string;
+    duration?: number;
+    recognition?: string;
+  };
+  msgtype: "audio";
+};
+
+export type DingTalkVideoMessage = {
+  conversationId: string;
+  atUsers: Array<{ dingtalkId: string; staffId?: string }>;
+  chatbotCorpId: string;
+  chatbotUserId: string;
+  msgId: string;
+  senderNick: string;
+  isAdmin: boolean;
+  senderStaffId: string;
+  sessionWebhookExpiredTime: number;
+  createAt: number;
+  senderCorpId: string;
+  conversationType: string;
+  senderId: string;
+  conversationTitle: string;
+  isInAtList: boolean;
+  sessionWebhook: string;
+  content: {
+    downloadCode: string;
+    duration?: number;
+    videoType?: string;
+  };
+  msgtype: "video";
+};
+
+export type DingTalkMessage =
+  | DingTalkTextMessage
+  | DingTalkPictureMessage
+  | DingTalkFileMessage
+  | DingTalkAudioMessage
+  | DingTalkVideoMessage;
 
 export type DingTalkCallbackEvent = {
   specVersion: string;
