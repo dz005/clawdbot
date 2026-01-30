@@ -160,9 +160,10 @@ export const dingtalkPlugin: ChannelPlugin<DingTalkAccountConfig> = {
             ctx.log?.info(`[${ctx.accountId}] Building inbound context...`);
             // Build inbound context for the message
             const inboundCtx = runtime.channel.reply.finalizeInboundContext({
-              Body: message.text?.content ?? "",
-              From: message.senderStaffId,
-              FromName: message.senderNick || message.senderStaffId,
+              Body: message.text?.content ?? "",  // Pure user input, cannot be forged
+              From: message.senderStaffId,  // System-provided ID, cannot be forged
+              SenderId: message.senderStaffId,  // System-provided sender ID
+              SenderName: message.senderNick,  // Sender nickname (system-provided, cannot be forged)
               SessionKey: `dingtalk:${chatId}`,
               AccountId: ctx.accountId,
               MessageSid: message.msgId,

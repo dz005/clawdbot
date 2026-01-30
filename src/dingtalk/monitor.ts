@@ -88,6 +88,9 @@ export async function monitorDingTalkProvider(opts: MonitorDingTalkOptions = {})
 
     // Log message details
     logger.info(`Message type: ${message.msgtype}, conversationType: ${message.conversationType}`);
+    logger.info(
+      `Message senderNick: ${message.senderNick}, senderStaffId: ${message.senderStaffId}`,
+    );
 
     // Handle text messages in single chat (conversationType: "1") or group chat (conversationType: "2")
     if (message.msgtype === "text") {
