@@ -244,6 +244,7 @@ export const dingtalkPlugin: ChannelPlugin<DingTalkAccountConfig> = {
             }
 
             ctx.log?.info(`[${ctx.accountId}] Building inbound context...`);
+
             // Build inbound context for the message
             const inboundCtx = runtime.channel.reply.finalizeInboundContext({
               Body: body,
@@ -257,6 +258,7 @@ export const dingtalkPlugin: ChannelPlugin<DingTalkAccountConfig> = {
               ChatId: chatId,
               MediaPath: mediaPath,
               MediaType: mediaType,
+              ForceAddSenderMeta: true, // Force add sender info even for private chats
             });
             ctx.log?.info(`[${ctx.accountId}] Inbound context built, dispatching reply...`);
 

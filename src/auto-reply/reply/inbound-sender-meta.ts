@@ -6,7 +6,10 @@ export function formatInboundBodyWithSenderMeta(params: { body: string; ctx: Msg
   const body = params.body;
   if (!body.trim()) return body;
   const chatType = normalizeChatType(params.ctx.ChatType);
-  if (!chatType || chatType === "direct") return body;
+
+  // Skip adding sender meta for direct chats unless ForceAddSenderMeta is set
+  if (!params.ctx.ForceAddSenderMeta && (!chatType || chatType === "direct")) return body;
+
   if (hasSenderMetaLine(body, params.ctx)) return body;
 
   const senderLabel = resolveSenderLabel({

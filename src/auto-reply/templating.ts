@@ -117,6 +117,11 @@ export type MsgContext = {
    * Used for hook confirmation messages like "Session context saved to memory".
    */
   HookMessages?: string[];
+  /**
+   * Force adding sender metadata even for direct/private chats.
+   * Used by channels like DingTalk where private chat sessions may involve multiple users.
+   */
+  ForceAddSenderMeta?: boolean;
 };
 
 export type FinalizedMsgContext = Omit<MsgContext, "CommandAuthorized"> & {
