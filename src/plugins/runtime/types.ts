@@ -125,6 +125,11 @@ type TelegramMessageActions =
   typeof import("../../channels/plugins/actions/telegram.js").telegramMessageActions;
 type SendMessageDingTalk = typeof import("../../dingtalk/send.js").sendMessageDingTalk;
 type SendMarkdownDingTalk = typeof import("../../dingtalk/send.js").sendMarkdownDingTalk;
+type DownloadFileDingTalk = typeof import("../../dingtalk/send.js").downloadFileDingTalk;
+type SendImageDingTalk = typeof import("../../dingtalk/send.js").sendImageDingTalk;
+type SendFileDingTalk = typeof import("../../dingtalk/send.js").sendFileDingTalk;
+type SendVoiceDingTalk = typeof import("../../dingtalk/send.js").sendVoiceDingTalk;
+type SendVideoDingTalk = typeof import("../../dingtalk/send.js").sendVideoDingTalk;
 type MonitorDingTalkProvider = typeof import("../../dingtalk/monitor.js").monitorDingTalkProvider;
 type ProbeSignal = typeof import("../../signal/probe.js").probeSignal;
 type SendMessageSignal = typeof import("../../signal/send.js").sendMessageSignal;
@@ -310,6 +315,11 @@ export type PluginRuntime = {
       monitorDingTalkProvider: MonitorDingTalkProvider;
       sendMessageDingTalk: SendMessageDingTalk;
       sendMarkdownDingTalk: SendMarkdownDingTalk;
+      downloadFileDingTalk: DownloadFileDingTalk;
+      sendImageDingTalk: SendImageDingTalk;
+      sendFileDingTalk: SendFileDingTalk;
+      sendVoiceDingTalk: SendVoiceDingTalk;
+      sendVideoDingTalk: SendVideoDingTalk;
     };
     signal: {
       probeSignal: ProbeSignal;

@@ -154,21 +154,109 @@ export const dingtalkPlugin: ChannelPlugin<DingTalkAccountConfig> = {
           const chatType = isPrivateChat ? "direct" : "group";
           const chatId = message.conversationId;
 
-          ctx.log?.info(`[${ctx.accountId}] ${chatType} message from ${message.senderStaffId}: ${message.text?.content?.slice(0, 50)}...`);
+          ctx.log?.info(`[${ctx.accountId}] ${chatType} message from ${message.senderStaffId}, type: ${message.msgtype}`);
 
           try {
+            // Prepare message body and media info
+            let body = "";
+            let mediaPath: string | undefined;
+            let mediaType: string | undefined;
+
+            if (message.msgtype === "text") {
+              body = message.text?.content ?? "";
+            } else if (message.msgtype === "picture") {
+              ctx.log?.info(`[${ctx.accountId}] Downloading picture...`);
+              try {
+                const result = await runtime.channel.dingtalk.downloadFileDingTalk({
+                  downloadCode: message.content.downloadCode,
+                  accountId: ctx.accountId,
+                  config: ctx.cfg,
+                });
+                // Save to temp file
+                const fs = await import("node:fs");
+                const path = await import("node:path");
+                const os = await import("node:os");
+                const tempDir = path.join(os.tmpdir(), "clawdbot-dingtalk");
+                if (!fs.existsSync(tempDir)) {
+                  fs.mkdirSync(tempDir, { recursive: true });
+                }
+                const tempFileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+                mediaPath = path.join(tempDir, tempFileName);
+                fs.writeFileSync(mediaPath, result);
+                mediaType = "image/jpeg";
+                body = "[用户发送了一张图片]";
+                ctx.log?.info(`[${ctx.accountId}] Picture downloaded to ${mediaPath}`);
+              } catch (err) {
+                ctx.log?.error(`[${ctx.accountId}] Failed to download picture: ${err}`);
+                body = "[用户发送了一张图片，但下载失败]";
+              }
+            } else if (message.msgtype === "file") {
+              const fileName = message.content?.fileName || "未知文件";
+              ctx.log?.info(`[${ctx.accountId}] Downloading file: ${fileName}...`);
+              try {
+                const result = await runtime.channel.dingtalk.downloadFileDingTalk({
+                  downloadCode: message.content.downloadCode,
+                  accountId: ctx.accountId,
+                  config: ctx.cfg,
+                });
+                // Save to temp file
+                const fs = await import("node:fs");
+                const path = await import("node:path");
+                const os = await import("node:os");
+                const tempDir = path.join(os.tmpdir(), "clawdbot-dingtalk");
+                if (!fs.existsSync(tempDir)) {
+                  fs.mkdirSync(tempDir, { recursive: true });
+                }
+                const ext = path.extname(fileName) || ".bin";
+                const tempFileName = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
+                mediaPath = path.join(tempDir, tempFileName);
+                fs.writeFileSync(mediaPath, result);
+                // Guess media type
+                if ([".pdf"].includes(ext.toLowerCase())) {
+                  mediaType = "application/pdf";
+                } else if ([".txt", ".md"].includes(ext.toLowerCase())) {
+                  mediaType = "text/plain";
+                } else {
+                  mediaType = "application/octet-stream";
+                }
+                body = `[用户发送了文件: ${fileName}]`;
+                ctx.log?.info(`[${ctx.accountId}] File downloaded to ${mediaPath}`);
+              } catch (err) {
+                ctx.log?.error(`[${ctx.accountId}] Failed to download file: ${err}`);
+                body = `[用户发送了文件: ${fileName}，但下载失败]`;
+              }
+            } else if (message.msgtype === "audio") {
+              const recognition = message.content?.recognition;
+              if (recognition && recognition.trim()) {
+                body = recognition.trim();
+                ctx.log?.info(`[${ctx.accountId}] Using speech recognition: ${body.slice(0, 50)}...`);
+              } else {
+                const duration = message.content?.duration || 0;
+                body = `[用户发送了语音消息${duration > 0 ? `, 时长: ${duration}秒` : ""}]`;
+              }
+            } else if (message.msgtype === "video") {
+              const duration = message.content?.duration || 0;
+              const videoType = message.content?.videoType;
+              body = `[用户发送了视频消息${duration > 0 ? `, 时长: ${duration}秒` : ""}${videoType ? `, 格式: ${videoType}` : ""}]`;
+            } else {
+              ctx.log?.warn(`[${ctx.accountId}] Unsupported message type: ${message.msgtype}`);
+              return;
+            }
+
             ctx.log?.info(`[${ctx.accountId}] Building inbound context...`);
             // Build inbound context for the message
             const inboundCtx = runtime.channel.reply.finalizeInboundContext({
-              Body: message.text?.content ?? "",  // Pure user input, cannot be forged
-              From: message.senderStaffId,  // System-provided ID, cannot be forged
-              SenderId: message.senderStaffId,  // System-provided sender ID
-              SenderName: message.senderNick,  // Sender nickname (system-provided, cannot be forged)
+              Body: body,
+              From: message.senderStaffId,
+              SenderId: message.senderStaffId,
+              SenderName: message.senderNick,
               SessionKey: `dingtalk:${chatId}`,
               AccountId: ctx.accountId,
               MessageSid: message.msgId,
               ChatType: chatType,
               ChatId: chatId,
+              MediaPath: mediaPath,
+              MediaType: mediaType,
             });
             ctx.log?.info(`[${ctx.accountId}] Inbound context built, dispatching reply...`);
 
@@ -186,8 +274,14 @@ export const dingtalkPlugin: ChannelPlugin<DingTalkAccountConfig> = {
                     return;
                   }
 
-                  // Send reply using DingTalk API
+                  // Skip tool execution status messages
                   const text = payload.text ?? "";
+                  if (text === "Tool execution." || text.trim() === "Tool execution.") {
+                    ctx.log?.info(`[${ctx.accountId}] Skipping tool execution status message`);
+                    return;
+                  }
+
+                  // Send reply using DingTalk API
                   if (text) {
                     ctx.log?.info(`[${ctx.accountId}] Sending reply: ${text.slice(0, 100)}...`);
 

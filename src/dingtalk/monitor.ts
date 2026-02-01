@@ -2,7 +2,7 @@ import { DWClient, TOPIC_ROBOT, type DWClientDownStream } from "dingtalk-stream"
 import type { ClawdbotConfig } from "../config/config.js";
 import type { RuntimeEnv } from "../runtime.js";
 import { resolveDingTalkAccount } from "./accounts.js";
-import type { DingTalkCallbackEvent, DingTalkMessage, DingTalkTextMessage } from "./types.js";
+import type { DingTalkCallbackEvent, DingTalkMessage } from "./types.js";
 import { danger, shouldLogVerbose } from "../globals.js";
 import { getChildLogger } from "../logging.js";
 
@@ -106,139 +106,24 @@ export async function monitorDingTalkProvider(opts: MonitorDingTalkOptions = {})
       return;
     }
 
-    // Handle different message types
-    if (message.msgtype === "text") {
-      logger.info(
-        `Processing ${isPrivateChat ? "private" : "group"} text message from ${message.senderStaffId}`,
-      );
-      if (opts.onMessage) {
-        logger.info(`Calling onMessage handler...`);
-        // Call handler asynchronously but don't wait
-        Promise.resolve(opts.onMessage(message))
-          .then(() => {
-            logger.info(`onMessage handler completed successfully`);
-          })
-          .catch((err) => {
-            logger.error(danger(`Error handling DingTalk message: ${err}`));
-            logger.error(danger(`Error stack: ${err.stack}`));
-          });
-      } else {
-        logger.warn("No onMessage handler configured");
-      }
-    } else if (message.msgtype === "picture") {
-      logger.info(
-        `Received picture message from ${message.senderStaffId}, full data: ${JSON.stringify(message, null, 2)}`,
-      );
-      // Convert to text description for AI
-      const textMessage: DingTalkTextMessage = {
-        ...message,
-        msgtype: "text",
-        text: {
-          content: "[用户发送了一张图片]",
-        },
-      };
-      if (opts.onMessage) {
-        Promise.resolve(opts.onMessage(textMessage))
-          .then(() => {
-            logger.info(`Picture message handled as text description`);
-          })
-          .catch((err) => {
-            logger.error(danger(`Error handling picture message: ${err}`));
-          });
-      }
-    } else if (message.msgtype === "file") {
-      logger.info(
-        `Received file message from ${message.senderStaffId}, full data: ${JSON.stringify(message, null, 2)}`,
-      );
-      // Convert to text description for AI
-      const fileName = message.content?.fileName || "未知文件";
-      const textMessage: DingTalkTextMessage = {
-        ...message,
-        msgtype: "text",
-        text: {
-          content: `[用户发送了文件: ${fileName}]`,
-        },
-      };
-      if (opts.onMessage) {
-        Promise.resolve(opts.onMessage(textMessage))
-          .then(() => {
-            logger.info(`File message handled as text description`);
-          })
-          .catch((err) => {
-            logger.error(danger(`Error handling file message: ${err}`));
-          });
-      }
-    } else if (message.msgtype === "audio") {
-      logger.info(
-        `Received audio message from ${message.senderStaffId}, full data: ${JSON.stringify(message, null, 2)}`,
-      );
-      const duration = message.content?.duration || 0;
-      const recognition = message.content?.recognition;
+    // Handle all message types by passing to onMessage handler
+    logger.info(
+      `Processing ${isPrivateChat ? "private" : "group"} ${message.msgtype} message from ${message.senderStaffId}`,
+    );
 
-      let content: string;
-      if (recognition && recognition.trim()) {
-        // If speech recognition is available, use it as the main content
-        content = recognition.trim();
-        logger.info(`Using speech recognition content: ${content}`);
-      } else {
-        // Fallback to description if no recognition
-        content = `[用户发送了语音消息`;
-        if (duration > 0) {
-          content += `, 时长: ${duration}秒`;
-        }
-        content += `]`;
-      }
-
-      const textMessage: DingTalkTextMessage = {
-        ...message,
-        msgtype: "text",
-        text: {
-          content,
-        },
-      };
-      if (opts.onMessage) {
-        Promise.resolve(opts.onMessage(textMessage))
-          .then(() => {
-            logger.info(`Audio message handled as text description`);
-          })
-          .catch((err) => {
-            logger.error(danger(`Error handling audio message: ${err}`));
-          });
-      }
-    } else if (message.msgtype === "video") {
-      logger.info(
-        `Received video message from ${message.senderStaffId}, full data: ${JSON.stringify(message, null, 2)}`,
-      );
-      const duration = message.content?.duration || 0;
-      const videoType = message.content?.videoType;
-      let content = `[用户发送了视频消息`;
-      if (duration > 0) {
-        content += `, 时长: ${duration}秒`;
-      }
-      if (videoType) {
-        content += `, 格式: ${videoType}`;
-      }
-      content += `]`;
-
-      const textMessage: DingTalkTextMessage = {
-        ...message,
-        msgtype: "text",
-        text: {
-          content,
-        },
-      };
-      if (opts.onMessage) {
-        Promise.resolve(opts.onMessage(textMessage))
-          .then(() => {
-            logger.info(`Video message handled as text description`);
-          })
-          .catch((err) => {
-            logger.error(danger(`Error handling video message: ${err}`));
-          });
-      }
+    if (opts.onMessage) {
+      logger.info(`Calling onMessage handler for ${message.msgtype} message...`);
+      // Call handler asynchronously but don't wait
+      Promise.resolve(opts.onMessage(message))
+        .then(() => {
+          logger.info(`onMessage handler completed successfully for ${message.msgtype} message`);
+        })
+        .catch((err) => {
+          logger.error(danger(`Error handling DingTalk ${message.msgtype} message: ${err}`));
+          logger.error(danger(`Error stack: ${err.stack}`));
+        });
     } else {
-      logger.info(`Skipping message: unsupported msgtype=${(message as DingTalkMessage).msgtype}`);
-      logger.info(`Full message data: ${JSON.stringify(message, null, 2)}`);
+      logger.warn("No onMessage handler configured");
     }
   });
 
